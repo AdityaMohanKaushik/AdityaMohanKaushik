@@ -192,6 +192,25 @@ function formatLongitude(longitudeDeg) {
   return `${SIGNS[signIndex]} ${degree}°${minute}'${second}''`;
 }
 
+function formatSignedDegrees(value) {
+  const abs = Math.abs(value).toFixed(4);
+  return `${value < 0 ? "-" : ""}${abs}°`;
+}
+
+/**
+ * Converts tropical ecliptic coordinates to equatorial declination.
+ * Longitude must be tropical (not ayanamsa-shifted sidereal) to preserve
+ * the physical equatorial position of the body.
+ */
+function computeDeclinationDegrees(longitudeDeg, latitudeDeg, obliquityDeg) {
+  const lambda = (normalizeDegrees(longitudeDeg) * Math.PI) / 180;
+  const beta = (latitudeDeg * Math.PI) / 180;
+  const epsilon = (obliquityDeg * Math.PI) / 180;
+  // δ from ecliptic (λ, β) to equatorial coordinates using obliquity ε.
+  const sinDelta = Math.sin(beta) * Math.cos(epsilon) + Math.cos(beta) * Math.sin(epsilon) * Math.sin(lambda);
+  return radToDeg(Math.asin(sinDelta));
+}
+
 function buildCharaKarakas(planetLongitudes) {
   const sortable = ["Su", "Mo", "Ma", "Me", "Jp", "Ve", "Sa"].map((code) => ({
     code,
@@ -263,6 +282,7 @@ function calculateGeneralSnapshot(rawInput) {
   const input = parseInput(rawInput);
   const jde = julianDayFromDate(input.utcDate);
   const ayanamsa = lahiriAyanamsaDegrees(jde);
+  const obliquityDeg = radToDeg(nutation.meanObliquity(jde));
 
   const sun = sunEcliptic(jde);
   const moon = moonposition.position(jde);
@@ -276,18 +296,30 @@ function calculateGeneralSnapshot(rawInput) {
   const ketuTropical = normalizeDegrees(rahuTropical + 180);
 
   const ascTropical = calculateAscendant(jde, input.latitude, input.longitude);
+  const tropicalLongitudes = {
+    As: ascTropical,
+    Su: sun.lonDeg,
+    Mo: radToDeg(moon.lon),
+    Ma: mar.lonDeg,
+    Me: mer.lonDeg,
+    Jp: jup.lonDeg,
+    Ve: ven.lonDeg,
+    Sa: sat.lonDeg,
+    Ra: rahuTropical,
+    Ke: ketuTropical
+  };
 
   const longitudes = {
-    As: siderealLongitude(ascTropical, ayanamsa),
-    Su: siderealLongitude(sun.lonDeg, ayanamsa),
-    Mo: siderealLongitude(radToDeg(moon.lon), ayanamsa),
-    Ma: siderealLongitude(mar.lonDeg, ayanamsa),
-    Me: siderealLongitude(mer.lonDeg, ayanamsa),
-    Jp: siderealLongitude(jup.lonDeg, ayanamsa),
-    Ve: siderealLongitude(ven.lonDeg, ayanamsa),
-    Sa: siderealLongitude(sat.lonDeg, ayanamsa),
-    Ra: siderealLongitude(rahuTropical, ayanamsa),
-    Ke: siderealLongitude(ketuTropical, ayanamsa)
+    As: siderealLongitude(tropicalLongitudes.As, ayanamsa),
+    Su: siderealLongitude(tropicalLongitudes.Su, ayanamsa),
+    Mo: siderealLongitude(tropicalLongitudes.Mo, ayanamsa),
+    Ma: siderealLongitude(tropicalLongitudes.Ma, ayanamsa),
+    Me: siderealLongitude(tropicalLongitudes.Me, ayanamsa),
+    Jp: siderealLongitude(tropicalLongitudes.Jp, ayanamsa),
+    Ve: siderealLongitude(tropicalLongitudes.Ve, ayanamsa),
+    Sa: siderealLongitude(tropicalLongitudes.Sa, ayanamsa),
+    Ra: siderealLongitude(tropicalLongitudes.Ra, ayanamsa),
+    Ke: siderealLongitude(tropicalLongitudes.Ke, ayanamsa)
   };
 
   const latitudes = {
@@ -304,6 +336,12 @@ function calculateGeneralSnapshot(rawInput) {
   };
 
   const karakas = buildCharaKarakas(longitudes);
+  const declinations = Object.fromEntries(
+    Object.keys(tropicalLongitudes).map((code) => [
+      code,
+      computeDeclinationDegrees(tropicalLongitudes[code], latitudes[code], obliquityDeg)
+    ])
+  );
 
   const grahaOrder = ["As", "Su", "Mo", "Ma", "Me", "Jp", "Ve", "Sa", "Ra", "Ke"];
   const grahaInfo = grahaOrder.map((code) => {
@@ -314,8 +352,8 @@ function calculateGeneralSnapshot(rawInput) {
       name: PLANET_NAMES[code],
       karaka: karakas[code] || "",
       long: formatLongitude(lon),
-      lat: `${latitudes[code].toFixed(2)}°`,
-      dec: "0°",
+      lat: formatSignedDegrees(latitudes[code]),
+      dec: formatSignedDegrees(declinations[code]),
       nakshatra: `${nak.name}(${nak.index + 1}) ${nak.lord}`,
       pada: String(nak.pada)
     };
