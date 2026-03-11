@@ -160,7 +160,11 @@
       document.getElementById('autofill').addEventListener('click', autofillLocation);
       document.getElementById('location').addEventListener('change', autofillLocation);
       document.getElementById('calculate').addEventListener('click', calculate);
-      autofillLocation().then(calculate);
+      autofillLocation()
+        .then(calculate)
+        .catch((error) => {
+          document.getElementById('status').textContent = `Error: ${error?.message || 'Unable to initialize calculator'}`;
+        });
     </script>
   </body>
 </html>

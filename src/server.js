@@ -6,6 +6,7 @@ const { runExactComparison } = require("./compare");
 const { calculateJyotishSnapshot } = require("./jyotishEngine");
 
 const publicDir = path.join(__dirname, "..", "public");
+const MAX_REQUEST_BODY_SIZE = 1024 * 100;
 
 function sendJson(res, statusCode, body) {
   res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
@@ -17,7 +18,7 @@ function readJsonBody(req) {
     let raw = "";
     req.on("data", (chunk) => {
       raw += chunk;
-      if (raw.length > 1024 * 100) {
+      if (raw.length > MAX_REQUEST_BODY_SIZE) {
         reject(new Error("Request body too large"));
       }
     });

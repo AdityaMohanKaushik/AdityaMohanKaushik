@@ -7,7 +7,7 @@ const { referenceInput, referenceOutput } = require("./referenceCase");
 const NAKSHATRAS = [
   ["Aśvinī", "Ke"], ["Bharaṇī", "Ve"], ["Kṛttikā", "Su"], ["Rohiṇī", "Mo"], ["Mṛgaśīrṣa", "Ma"], ["Ārdrā", "Ra"], ["Punarvasu", "Jp"], ["Puṣya", "Sa"], ["Āśleṣā", "Me"],
   ["Maghā", "Ke"], ["Pūrvaphālgunī", "Ve"], ["Uttaraphālgunī", "Su"], ["Hasta", "Mo"], ["Citrā", "Ma"], ["Svātī", "Ra"], ["Viśākhā", "Jp"], ["Anurādhā", "Sa"], ["Jyeṣṭhā", "Me"],
-  ["Mūla", "Ke"], ["Pūrvāṣāḍhā", "Ve"], ["Uttarāṣāḍhā", "Su"], ["Śravaṇa", "Mo"], ["Dhaniṣṭhā", "Ma"], ["Śatabhiṣaj", "Ra"], ["Pūrvabhādrapadā", "Jp"], ["Uttarabhādrapadā", "Sa"], ["Revatī", "Me"]
+  ["Mūla", "Ke"], ["Pūrvāṣāḍhā", "Ve"], ["Uttarāṣāḍhā", "Su"], ["Śravaṇa", "Mo"], ["Dhaniṣṭhā", "Ma"], ["Śatabhiṣaj", "Ra"], ["Pūrvabhādra", "Jp"], ["Uttarabhādrapadā", "Sa"], ["Revatī", "Me"]
 ];
 
 const SIGNS = ["Ar", "Ta", "Ge", "Cn", "Le", "Vi", "Li", "Sc", "Sg", "Cp", "Aq", "Pi"];
@@ -248,6 +248,7 @@ function formatSignedDegrees(value) {
 
 /**
  * Converts tropical ecliptic coordinates to equatorial declination.
+ * All parameters are in degrees and the return value is declination in degrees.
  * Longitude must be tropical (not ayanamsa-shifted sidereal) to preserve
  * the physical equatorial position of the body.
  */
