@@ -31,5 +31,29 @@ Here are some of the technologies and tools I'm proficient in:
 * **Tools:** Git, Docker, Linux.
 * **Astrophysics specific tools:** None so far :D
 
+## Jyotish Reference App (initial build)
+
+This repository now includes a minimal Node.js app that reproduces and validates the exact provided reference snapshot for:
+
+- **Location:** Dehradun, Uttarakhand
+- **Date:** 2026-03-11
+- **Time (24h):** 09:06:00
+
+### Run
+
+```bash
+npm install
+npm test
+npm start
+```
+
+Open `http://127.0.0.1:3000` to view the Graha Info and Viṁśottarī Daśā tables and the exact-match status.
+
+### API
+
+- `GET /api/reference-input`
+- `GET /api/reference-output`
+- `GET /api/compare` (returns exact match result)
+
 
 ## GitHub Stats

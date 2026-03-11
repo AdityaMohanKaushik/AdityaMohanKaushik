@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jyotish Reference Match</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; }
+      h1, h2 { margin: 0 0 12px; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+      th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+      th { background: #f3f3f3; }
+      .ok { color: #0a7f2e; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <h1>Jyotish Reference (Dehradun 2026-03-11 09:06:00)</h1>
+    <p id="match"></p>
+
+    <h2>Graha Info</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Body</th><th>Name</th><th>Kāraka</th><th>Long</th><th>Lat</th><th>Dec</th><th>Nakṣatra</th><th>Pada</th>
+        </tr>
+      </thead>
+      <tbody id="graha"></tbody>
+    </table>
+
+    <h2>Viṁśottarī Daśā</h2>
+    <table>
+      <thead><tr><th>Lord</th><th>Years from birth</th><th>Range</th></tr></thead>
+      <tbody id="dasha"></tbody>
+    </table>
+
+    <script>
+      async function load() {
+        const [compareRes, outputRes] = await Promise.all([
+          fetch('/api/compare'),
+          fetch('/api/reference-output')
+        ]);
+
+        const compare = await compareRes.json();
+        const output = await outputRes.json();
+
+        document.getElementById('match').innerHTML = compare.matchesExactly
+          ? '<span class="ok">Exact match: PASS</span>'
+          : 'Exact match: FAIL';
+
+        const graha = document.getElementById('graha');
+        output.grahaInfo.forEach((row) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${row.body}</td><td>${row.name}</td><td>${row.karaka}</td><td>${row.long}</td><td>${row.lat}</td><td>${row.dec}</td><td>${row.nakshatra}</td><td>${row.pada}</td>`;
+          graha.appendChild(tr);
+        });
+
+        const dasha = document.getElementById('dasha');
+        output.vimshottariDasha.periods.forEach((period) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${period.lord}</td><td>${period.yearsFromBirth}</td><td>${period.range}</td>`;
+          dasha.appendChild(tr);
+        });
+      }
+      load();
+    </script>
+  </body>
+</html>
