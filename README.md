@@ -14,7 +14,7 @@ I'm Aditya, a passionate individual with a diverse background in astrophysics, e
 
 ## What I'm Currently Working On
 
-* **Vedic Jyotish Platform (in progress):** Building a Vedic-only astrology product with chart-generation and feature parity goals benchmarked against deva.guru outputs.
+* **Vedic Jyotish Platform (in progress):** Building a Vedic-only astrology product with chart-generation and feature parity goals benchmarked against Deva.guru outputs.
   * **Rule 1:** Vedic astrology only (no Western model blending).
   * **Rule 2:** No scraping or copying source code/content from other websites.
   * **Rule 3:** Build from first principles and validate computational outputs against trusted references.
