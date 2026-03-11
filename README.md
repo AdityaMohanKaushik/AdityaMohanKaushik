@@ -14,7 +14,11 @@ I'm Aditya, a passionate individual with a diverse background in astrophysics, e
 
 ## What I'm Currently Working On
 
-* [**Project Name 1:** Solace, it's an A.I therapist paired with a realistic Voice synthesis model to help users find their A.I companion to talk to and get judgement free advice from
+* **Vedic Jyotish Platform (in progress):** Building a Vedic-only astrology product with chart-generation and feature parity goals benchmarked against deva.guru outputs.
+  * **Rule 1:** Vedic astrology only (no Western model blending).
+  * **Rule 2:** No scraping or copying source code/content from other websites.
+  * **Rule 3:** Build from first principles and validate computational outputs against trusted references.
+  * **Scope target:** Cover beginner-to-premium feature tiers over iterative releases (core charts first, then advanced modules).
 
 
 ## Technologies and Tools
