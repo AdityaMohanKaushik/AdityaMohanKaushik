@@ -41,11 +41,12 @@
       <label>Longitude
         <input id="longitude" type="number" step="0.0001" value="78.0322" required />
       </label>
-      <label>Timezone offset (±HH:MM)
-        <input id="timezone" value="+05:30" pattern="^[+-]\d{2}:\d{2}$" required />
+      <label>Timezone (IANA or ±HH:MM)
+        <input id="timezone" value="Asia/Kolkata" required />
       </label>
     </form>
 
+    <button id="autofill" type="button">Auto-fill location details</button>
     <button id="calculate" type="button">Calculate Chart</button>
     <p id="status" aria-live="polite"></p>
 
@@ -133,8 +134,33 @@
         fillTable('d60-planets', result.divisionalCharts.D60.planets, (p) => `<td>${p.body}</td><td>${p.sign}</td>`);
       }
 
+      async function autofillLocation() {
+        const location = document.getElementById('location').value.trim();
+        const status = document.getElementById('status');
+        if (!location) {
+          status.textContent = 'Enter a location first.';
+          return;
+        }
+
+        status.textContent = 'Resolving location...';
+        const response = await fetch(`/api/location-lookup?query=${encodeURIComponent(location)}`);
+        const result = await response.json();
+        if (!response.ok) {
+          status.textContent = `Error: ${result.error || 'Unable to resolve location'}`;
+          return;
+        }
+
+        document.getElementById('location').value = result.location;
+        document.getElementById('latitude').value = Number(result.latitude).toFixed(4);
+        document.getElementById('longitude').value = Number(result.longitude).toFixed(4);
+        document.getElementById('timezone').value = result.timezone;
+        status.textContent = `Location resolved: ${result.location} (${result.timezone})`;
+      }
+
+      document.getElementById('autofill').addEventListener('click', autofillLocation);
+      document.getElementById('location').addEventListener('change', autofillLocation);
       document.getElementById('calculate').addEventListener('click', calculate);
-      calculate();
+      autofillLocation().then(calculate);
     </script>
   </body>
 </html>

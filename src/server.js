@@ -32,7 +32,28 @@ function readJsonBody(req) {
   });
 }
 
+async function resolveLocationDetails(query, fetchImpl = fetch) {
+  const normalizedQuery = String(query || "").trim();
+  if (!normalizedQuery) throw new Error("location query is required");
+
+  const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(normalizedQuery)}&count=1&language=en&format=json`;
+  const geoResponse = await fetchImpl(geoUrl);
+  if (!geoResponse.ok) throw new Error("unable to resolve location");
+  const geoData = await geoResponse.json();
+  const match = geoData?.results?.[0];
+  if (!match) throw new Error("location not found");
+
+  return {
+    location: [match.name, match.admin1, match.country].filter(Boolean).join(", "),
+    latitude: Number(match.latitude),
+    longitude: Number(match.longitude),
+    timezone: String(match.timezone || "")
+  };
+}
+
 const server = http.createServer(async (req, res) => {
+  const parsedUrl = new URL(req.url || "/", "http://127.0.0.1");
+
   if (req.url === "/api/reference-input" && req.method === "GET") {
     return sendJson(res, 200, referenceInput);
   }
@@ -52,6 +73,16 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, snapshot);
     } catch (error) {
       return sendJson(res, 400, { error: error.message || "Unable to calculate chart" });
+    }
+  }
+
+  if (parsedUrl.pathname === "/api/location-lookup" && req.method === "GET") {
+    try {
+      const query = parsedUrl.searchParams.get("query");
+      const details = await resolveLocationDetails(query);
+      return sendJson(res, 200, details);
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message || "Unable to lookup location" });
     }
   }
 
@@ -81,4 +112,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server };
+module.exports = { server, resolveLocationDetails };

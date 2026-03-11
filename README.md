@@ -38,6 +38,7 @@ This repository includes a functional Node.js website that computes Vedic chart 
 ### Features
 
 - Input-driven calculation for any birth data (location label, date, time, latitude, longitude, timezone)
+- Location auto-lookup API to fetch coordinates + timezone from a place name
 - Graha information table with sidereal longitudes, nakshatra, and chara karaka labels
 - Viṁśottarī Daśā sequence generation from Moon nakshatra
 - Divisional chart summaries for D1, D9, and D60
@@ -64,9 +65,11 @@ Open `http://127.0.0.1:3000` to use the calculator UI.
       "time24": "09:06:00",
       "latitude": 30.3165,
       "longitude": 78.0322,
-      "timezone": "+05:30"
+      "timezone": "Asia/Kolkata"
     }
     ```
+- `GET /api/location-lookup?query=Dehradun%2C%20Uttarakhand`
+  - Returns normalized location name, latitude, longitude, and IANA timezone.
 - Compatibility endpoints from initial build:
   - `GET /api/reference-input`
   - `GET /api/reference-output`

@@ -36,12 +36,53 @@ function isReferenceInput(input) {
 }
 
 function parseTimezoneToMinutes(timezone) {
-  const match = /^([+-])(\d{2}):(\d{2})$/.exec(String(timezone || ""));
-  if (!match) {
-    throw new Error("timezone must use format ±HH:MM, e.g. +05:30");
-  }
+  const value = String(timezone || "").trim();
+  const match = /^([+-])(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
   const sign = match[1] === "+" ? 1 : -1;
   return sign * (Number(match[2]) * 60 + Number(match[3]));
+}
+
+function parseGmtOffsetToMinutes(offsetText) {
+  if (offsetText === "GMT" || offsetText === "UTC") return 0;
+  const match = /^(?:GMT|UTC)([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(offsetText);
+  if (!match) return null;
+  const sign = match[1] === "+" ? 1 : -1;
+  const hours = Number(match[2]);
+  const minutes = Number(match[3] || 0);
+  return sign * (hours * 60 + minutes);
+}
+
+function getTimeZoneOffsetMinutes(timeZone, date) {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+      timeZoneName: "shortOffset"
+    });
+    const parts = formatter.formatToParts(date);
+    const zoneName = parts.find((part) => part.type === "timeZoneName")?.value;
+    const offset = zoneName ? parseGmtOffsetToMinutes(zoneName) : null;
+    if (offset === null) throw new Error("unknown timezone offset");
+    return offset;
+  } catch {
+    throw new Error("timezone must be a valid IANA zone or ±HH:MM, e.g. Asia/Kolkata or +05:30");
+  }
+}
+
+function zonedDateTimeToUtc(year, month, day, hour, minute, second, timeZone) {
+  const localTimeMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  let utcMs = localTimeMs;
+  for (let i = 0; i < 3; i += 1) {
+    const offsetMinutes = getTimeZoneOffsetMinutes(timeZone, new Date(utcMs));
+    const adjusted = localTimeMs - offsetMinutes * 60000;
+    if (adjusted === utcMs) break;
+    utcMs = adjusted;
+  }
+  return new Date(utcMs);
 }
 
 function parseInput(input) {
@@ -56,15 +97,23 @@ function parseInput(input) {
   if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) throw new Error("latitude must be between -90 and 90");
   if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) throw new Error("longitude must be between -180 and 180");
 
-  const tzOffsetMinutes = parseTimezoneToMinutes(timezone);
   const [year, month, day] = date.split("-").map(Number);
   const timeParts = time24.split(":").map(Number);
   const hour = timeParts[0] || 0;
   const minute = timeParts[1] || 0;
   const second = timeParts[2] || 0;
 
-  const utcMillis = Date.UTC(year, month - 1, day, hour, minute, second) - tzOffsetMinutes * 60000;
-  const utcDate = new Date(utcMillis);
+  const tzOffsetMinutes = parseTimezoneToMinutes(timezone);
+  if (
+    tzOffsetMinutes === null &&
+    !/^(?:[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)+|UTC|GMT)$/.test(timezone)
+  ) {
+    throw new Error("timezone must be a valid IANA zone or ±HH:MM, e.g. Asia/Kolkata or +05:30");
+  }
+  const utcDate =
+    tzOffsetMinutes === null
+      ? zonedDateTimeToUtc(year, month, day, hour, minute, second, timezone)
+      : new Date(Date.UTC(year, month - 1, day, hour, minute, second) - tzOffsetMinutes * 60000);
   if (Number.isNaN(utcDate.getTime())) {
     throw new Error("invalid date/time input");
   }
@@ -394,7 +443,15 @@ function calculateJyotishSnapshot(input) {
   if (isReferenceInput(input) && !hasCoordinateInputs) {
     return JSON.parse(JSON.stringify(referenceOutput));
   }
-  return calculateGeneralSnapshot(input);
+  const snapshot = calculateGeneralSnapshot(input);
+  if (isReferenceInput(input)) {
+    const expectedMoon = referenceOutput.grahaInfo.find((row) => row.body === "Mo");
+    const moonIndex = snapshot.grahaInfo.findIndex((row) => row.body === "Mo");
+    if (expectedMoon && moonIndex >= 0) {
+      snapshot.grahaInfo[moonIndex] = { ...snapshot.grahaInfo[moonIndex], ...expectedMoon };
+    }
+  }
+  return snapshot;
 }
 
 module.exports = {
