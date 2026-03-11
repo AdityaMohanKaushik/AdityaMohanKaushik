@@ -31,13 +31,17 @@ Here are some of the technologies and tools I'm proficient in:
 * **Tools:** Git, Docker, Linux.
 * **Astrophysics specific tools:** None so far :D
 
-## Jyotish Reference App (initial build)
+## Jyotish Calculator Web App
 
-This repository now includes a minimal Node.js app that reproduces and validates the exact provided reference snapshot for:
+This repository includes a functional Node.js website that computes Vedic chart outputs from user-provided birth details.
 
-- **Location:** Dehradun, Uttarakhand
-- **Date:** 2026-03-11
-- **Time (24h):** 09:06:00
+### Features
+
+- Input-driven calculation for any birth data (location label, date, time, latitude, longitude, timezone)
+- Graha information table with sidereal longitudes, nakshatra, and chara karaka labels
+- Viṁśottarī Daśā sequence generation from Moon nakshatra
+- Divisional chart summaries for D1, D9, and D60
+- API-first architecture with browser UI powered by `/api/calculate`
 
 ### Run
 
@@ -47,13 +51,25 @@ npm test
 npm start
 ```
 
-Open `http://127.0.0.1:3000` to view the Graha Info and Viṁśottarī Daśā tables and the exact-match status.
+Open `http://127.0.0.1:3000` to use the calculator UI.
 
 ### API
 
-- `GET /api/reference-input`
-- `GET /api/reference-output`
-- `GET /api/compare` (returns exact match result)
-
+- `POST /api/calculate`
+  - JSON body:
+    ```json
+    {
+      "location": "Dehradun, Uttarakhand",
+      "date": "2026-03-11",
+      "time24": "09:06:00",
+      "latitude": 30.3165,
+      "longitude": 78.0322,
+      "timezone": "+05:30"
+    }
+    ```
+- Compatibility endpoints from initial build:
+  - `GET /api/reference-input`
+  - `GET /api/reference-output`
+  - `GET /api/compare`
 
 ## GitHub Stats

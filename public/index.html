@@ -3,25 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jyotish Reference Match</title>
+    <title>Jyotish Chart Calculator</title>
     <style>
-      body { font-family: Arial, sans-serif; margin: 24px; }
+      body { font-family: Arial, sans-serif; margin: 24px; max-width: 1100px; }
       h1, h2 { margin: 0 0 12px; }
+      form { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(180px, 1fr)); margin-bottom: 16px; }
+      label { display: grid; gap: 4px; font-size: 14px; }
+      input { padding: 8px; border: 1px solid #d0d0d0; border-radius: 4px; }
+      button { width: 180px; padding: 10px; border: 0; border-radius: 4px; background: #1d4ed8; color: #fff; font-weight: 600; cursor: pointer; }
       table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
       th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
       th { background: #f3f3f3; }
-      .ok { color: #0a7f2e; font-weight: 700; }
+      #status { margin: 8px 0 16px; font-weight: 700; }
+      .charts { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 14px; }
+      .card { border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
+      .muted { color: #555; font-size: 14px; }
+      @media (max-width: 900px) { form, .charts { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
-    <h1>Jyotish Reference (Dehradun 2026-03-11 09:06:00)</h1>
-    <p id="match"></p>
+    <h1>Vedic Jyotish Calculator</h1>
+    <p class="muted">Enter birth details and generate Graha data, Viṁśottarī Daśā, and divisional charts.</p>
+
+    <form id="calculator-form">
+      <label>Location
+        <input id="location" value="Dehradun, Uttarakhand" required />
+      </label>
+      <label>Date
+        <input id="date" type="date" value="2026-03-11" required />
+      </label>
+      <label>Time (24h)
+        <input id="time24" value="09:06:00" pattern="^\d{2}:\d{2}(:\d{2})?$" required />
+      </label>
+      <label>Latitude
+        <input id="latitude" type="number" step="0.0001" value="30.3165" required />
+      </label>
+      <label>Longitude
+        <input id="longitude" type="number" step="0.0001" value="78.0322" required />
+      </label>
+      <label>Timezone offset (±HH:MM)
+        <input id="timezone" value="+05:30" pattern="^[+-]\d{2}:\d{2}$" required />
+      </label>
+    </form>
+
+    <button id="calculate" type="button">Calculate Chart</button>
+    <p id="status"></p>
 
     <h2>Graha Info</h2>
     <table>
       <thead>
         <tr>
-          <th>Body</th><th>Name</th><th>Kāraka</th><th>Long</th><th>Lat</th><th>Dec</th><th>Nakṣatra</th><th>Pada</th>
+          <th>Body</th><th>Name</th><th>Kāraka</th><th>Long</th><th>Lat</th><th>Nakṣatra</th><th>Pada</th>
         </tr>
       </thead>
       <tbody id="graha"></tbody>
@@ -33,35 +65,76 @@
       <tbody id="dasha"></tbody>
     </table>
 
+    <h2>Divisional Charts</h2>
+    <div class="charts">
+      <div class="card">
+        <h3>D1 (Rāśi)</h3>
+        <p id="d1-asc" class="muted"></p>
+        <table><thead><tr><th>Planet</th><th>Sign</th></tr></thead><tbody id="d1-planets"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>D9 (Navāṁśa)</h3>
+        <table><thead><tr><th>Planet</th><th>Sign</th></tr></thead><tbody id="d9-planets"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>D60 (Ṣaṣṭiāṁśa)</h3>
+        <table><thead><tr><th>Planet</th><th>Sign</th></tr></thead><tbody id="d60-planets"></tbody></table>
+      </div>
+    </div>
+
     <script>
-      async function load() {
-        const [compareRes, outputRes] = await Promise.all([
-          fetch('/api/compare'),
-          fetch('/api/reference-output')
-        ]);
+      function clearTable(id) {
+        document.getElementById(id).innerHTML = '';
+      }
 
-        const compare = await compareRes.json();
-        const output = await outputRes.json();
-
-        document.getElementById('match').innerHTML = compare.matchesExactly
-          ? '<span class="ok">Exact match: PASS</span>'
-          : 'Exact match: FAIL';
-
-        const graha = document.getElementById('graha');
-        output.grahaInfo.forEach((row) => {
+      function fillTable(id, rows, renderer) {
+        clearTable(id);
+        const body = document.getElementById(id);
+        rows.forEach((row) => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${row.body}</td><td>${row.name}</td><td>${row.karaka}</td><td>${row.long}</td><td>${row.lat}</td><td>${row.dec}</td><td>${row.nakshatra}</td><td>${row.pada}</td>`;
-          graha.appendChild(tr);
-        });
-
-        const dasha = document.getElementById('dasha');
-        output.vimshottariDasha.periods.forEach((period) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${period.lord}</td><td>${period.yearsFromBirth}</td><td>${period.range}</td>`;
-          dasha.appendChild(tr);
+          tr.innerHTML = renderer(row);
+          body.appendChild(tr);
         });
       }
-      load();
+
+      async function calculate() {
+        const payload = {
+          location: document.getElementById('location').value,
+          date: document.getElementById('date').value,
+          time24: document.getElementById('time24').value,
+          latitude: Number(document.getElementById('latitude').value),
+          longitude: Number(document.getElementById('longitude').value),
+          timezone: document.getElementById('timezone').value
+        };
+
+        const status = document.getElementById('status');
+        status.textContent = 'Calculating...';
+
+        const response = await fetch('/api/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          status.textContent = `Error: ${result.error || 'Unable to calculate chart'}`;
+          return;
+        }
+
+        status.textContent = `Calculated for ${result.input.location} | Ayanāṁśa: ${result.ayanamsa}°`;
+
+        fillTable('graha', result.grahaInfo, (row) => `<td>${row.body}</td><td>${row.name}</td><td>${row.karaka}</td><td>${row.long}</td><td>${row.lat}</td><td>${row.nakshatra}</td><td>${row.pada}</td>`);
+        fillTable('dasha', result.vimshottariDasha.periods, (period) => `<td>${period.lord}</td><td>${period.yearsFromBirth}</td><td>${period.range}</td>`);
+
+        document.getElementById('d1-asc').textContent = `Ascendant Sign: ${result.divisionalCharts.D1.ascendant}`;
+        fillTable('d1-planets', result.divisionalCharts.D1.planets, (p) => `<td>${p.body}</td><td>${p.sign}</td>`);
+        fillTable('d9-planets', result.divisionalCharts.D9.planets, (p) => `<td>${p.body}</td><td>${p.sign}</td>`);
+        fillTable('d60-planets', result.divisionalCharts.D60.planets, (p) => `<td>${p.body}</td><td>${p.sign}</td>`);
+      }
+
+      document.getElementById('calculate').addEventListener('click', calculate);
+      calculate();
     </script>
   </body>
 </html>

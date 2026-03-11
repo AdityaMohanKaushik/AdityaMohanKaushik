@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/AdityaMohanKaushik/AdityaMohanKaushik/issues"
   },
-  "homepage": "https://github.com/AdityaMohanKaushik/AdityaMohanKaushik#readme"
+  "homepage": "https://github.com/AdityaMohanKaushik/AdityaMohanKaushik#readme",
+  "dependencies": {
+    "astronomia": "^4.2.0"
+  }
 }
