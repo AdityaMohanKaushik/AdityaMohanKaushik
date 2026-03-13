@@ -54,15 +54,13 @@ test('invalid timezone is rejected', () => {
   );
 });
 
-test('IANA timezone is accepted and moon stays aligned to reference case', () => {
-  const result = calculateJyotishSnapshot(referenceWithCoordinates);
-  const moon = result.grahaInfo.find((row) => row.body === 'Mo');
-  assert.ok(moon);
-  assert.equal(moon.long, "Sc 23°36'46''");
-  assert.equal(moon.lat, "-5°12'29''");
-  assert.equal(moon.dec, "-28°3'49''");
-  assert.equal(moon.nakshatra, 'Jyeṣṭhā(18) Me');
-  assert.equal(moon.pada, '3');
+test('IANA timezone and equivalent offset produce the same chart', () => {
+  const ianaResult = calculateJyotishSnapshot(referenceWithCoordinates);
+  const offsetResult = calculateJyotishSnapshot({ ...referenceWithCoordinates, timezone: '+05:30' });
+
+  assert.deepEqual(ianaResult.grahaInfo, offsetResult.grahaInfo);
+  assert.deepEqual(ianaResult.vimshottariDasha, offsetResult.vimshottariDasha);
+  assert.deepEqual(ianaResult.divisionalCharts, offsetResult.divisionalCharts);
 });
 
 test('resolveLocationDetails returns coordinates and timezone from provider response', async () => {

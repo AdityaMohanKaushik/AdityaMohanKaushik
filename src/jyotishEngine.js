@@ -15,6 +15,7 @@ const DASHA_SEQUENCE = ["Ke", "Ve", "Su", "Mo", "Ma", "Ra", "Jp", "Sa", "Me"];
 const DASHA_YEARS = { Ke: 7, Ve: 20, Su: 6, Mo: 10, Ma: 7, Ra: 18, Jp: 16, Sa: 19, Me: 17 };
 const KARAKA_ORDER = ["AK", "AmK", "BK", "MK", "PK", "GK", "DK"];
 const PLANET_NAMES = { Su: "Sūrya", Mo: "Chandra", Ma: "Maṅgala", Me: "Budha", Jp: "Guru", Ve: "Śukra", Sa: "Śani", Ra: "Rāhu", Ke: "Ketu", As: "Lagna" };
+const SPEED_OF_LIGHT_AU_PER_DAY = 173.1446326846693;
 
 const earth = new planetposition.Planet(require("astronomia/data/vsop87Bearth").default);
 const mercury = new planetposition.Planet(require("astronomia/data/vsop87Bmercury").default);
@@ -176,7 +177,7 @@ function geocentricPlanetEcliptic(planet, jde) {
 
   compute();
   const delta = Math.sqrt(x * x + y * y + z * z);
-  const tau = 0.0057755183 * delta;
+  const tau = delta / SPEED_OF_LIGHT_AU_PER_DAY;
   compute(tau);
 
   return {
@@ -203,8 +204,13 @@ function calculateAscendant(jde, latitudeDeg, longitudeDeg) {
       0.000387933 * t * t -
       (t * t * t) / 38710000
   );
-  const lst = normalizeDegrees(gmst + longitudeDeg);
-  const epsilon = radToDeg(nutation.meanObliquity(jde));
+  const [deltaPsi, deltaEpsilon] = nutation.nutation(jde);
+  const meanObliquity = nutation.meanObliquity(jde);
+  const equationOfEquinoxes = radToDeg(deltaPsi * Math.cos(meanObliquity));
+  const gast = normalizeDegrees(gmst + equationOfEquinoxes);
+  const lst = normalizeDegrees(gast + longitudeDeg);
+  const trueObliquity = meanObliquity + deltaEpsilon;
+  const epsilon = radToDeg(trueObliquity);
 
   const theta = (lst * Math.PI) / 180;
   const phi = (latitudeDeg * Math.PI) / 180;
@@ -332,7 +338,7 @@ function calculateGeneralSnapshot(rawInput) {
   const input = parseInput(rawInput);
   const jde = julianDayFromDate(input.utcDate);
   const ayanamsa = lahiriAyanamsaDegrees(jde);
-  const obliquityDeg = radToDeg(nutation.meanObliquity(jde));
+  const trueObliquityDeg = radToDeg(nutation.meanObliquity(jde) + nutation.nutation(jde)[1]);
 
   const sun = sunEcliptic(jde);
   const moon = moonposition.position(jde);
@@ -389,7 +395,7 @@ function calculateGeneralSnapshot(rawInput) {
   const declinations = Object.fromEntries(
     Object.keys(tropicalLongitudes).map((code) => [
       code,
-      computeDeclinationDegrees(tropicalLongitudes[code], latitudes[code], obliquityDeg)
+      computeDeclinationDegrees(tropicalLongitudes[code], latitudes[code], trueObliquityDeg)
     ])
   );
 
@@ -444,15 +450,7 @@ function calculateJyotishSnapshot(input) {
   if (isReferenceInput(input) && !hasCoordinateInputs) {
     return JSON.parse(JSON.stringify(referenceOutput));
   }
-  const snapshot = calculateGeneralSnapshot(input);
-  if (isReferenceInput(input)) {
-    const expectedMoon = referenceOutput.grahaInfo.find((row) => row.body === "Mo");
-    const moonIndex = snapshot.grahaInfo.findIndex((row) => row.body === "Mo");
-    if (expectedMoon && moonIndex >= 0) {
-      snapshot.grahaInfo[moonIndex] = { ...snapshot.grahaInfo[moonIndex], ...expectedMoon };
-    }
-  }
-  return snapshot;
+  return calculateGeneralSnapshot(input);
 }
 
 module.exports = {
