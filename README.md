@@ -14,7 +14,11 @@ I'm Aditya, a passionate individual with a diverse background in astrophysics, e
 
 ## What I'm Currently Working On
 
-* [**Project Name 1:** Solace, it's an A.I therapist paired with a realistic Voice synthesis model to help users find their A.I companion to talk to and get judgement free advice from
+* **Vedic Jyotish Platform (in progress):** Building a Vedic-only astrology product with chart-generation and feature parity goals benchmarked against Deva.guru outputs.
+  * **Rule 1:** Vedic astrology only (no Western model blending).
+  * **Rule 2:** No scraping or copying source code/content from other websites.
+  * **Rule 3:** Build from first principles and validate computational outputs against trusted references.
+  * **Scope target:** Cover beginner-to-premium feature tiers over iterative releases (core charts first, then advanced modules).
 
 
 ## Technologies and Tools
@@ -27,5 +31,48 @@ Here are some of the technologies and tools I'm proficient in:
 * **Tools:** Git, Docker, Linux.
 * **Astrophysics specific tools:** None so far :D
 
+## Jyotish Calculator Web App
+
+This repository includes a functional Node.js website that computes Vedic chart outputs from user-provided birth details.
+
+### Features
+
+- Input-driven calculation for any birth data (location label, date, time, latitude, longitude, timezone)
+- Location auto-lookup API to fetch coordinates + timezone from a place name
+- Graha information table with sidereal longitudes, nakshatra, and chara karaka labels
+- Viṁśottarī Daśā sequence generation from Moon nakshatra
+- Divisional chart summaries for D1, D9, and D60
+- API-first architecture with browser UI powered by `/api/calculate`
+
+### Run
+
+```bash
+npm install
+npm test
+npm start
+```
+
+Open `http://127.0.0.1:3000` to use the calculator UI.
+
+### API
+
+- `POST /api/calculate`
+  - JSON body:
+    ```json
+    {
+      "location": "Dehradun, Uttarakhand",
+      "date": "2026-03-11",
+      "time24": "09:06:00",
+      "latitude": 30.3165,
+      "longitude": 78.0322,
+      "timezone": "Asia/Kolkata"
+    }
+    ```
+- `GET /api/location-lookup?query=Dehradun%2C%20Uttarakhand`
+  - Returns normalized location name, latitude, longitude, and IANA timezone.
+- Compatibility endpoints from initial build:
+  - `GET /api/reference-input`
+  - `GET /api/reference-output`
+  - `GET /api/compare`
 
 ## GitHub Stats

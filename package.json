@@ -1,0 +1,25 @@
+{
+  "name": "adityamohankaushik",
+  "version": "1.0.0",
+  "description": "🔭 Astrophysicist | 🚀 Entrepreneur | 💻 Developer",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdityaMohanKaushik/AdityaMohanKaushik.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AdityaMohanKaushik/AdityaMohanKaushik/issues"
+  },
+  "homepage": "https://github.com/AdityaMohanKaushik/AdityaMohanKaushik#readme",
+  "dependencies": {
+    "astronomia": "^4.2.0"
+  }
+}
